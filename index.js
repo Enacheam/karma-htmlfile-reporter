@@ -1,172 +1,249 @@
 var os = require('os');
 var path = require('path');
 var fs = require('fs');
+var fse = require('fs-extra');
 var builder = require('xmlbuilder');
 
-var HTMLReporter = function(baseReporterDecorator, config, emitter, logger, helper, formatError) {
-  var outputFile = config.htmlReporter.outputFile;
-  var pageTitle = config.htmlReporter.pageTitle || 'Unit Test Results';
-  var subPageTitle = config.htmlReporter.subPageTitle || false;
-  var log = logger.create('reporter.html');
- 
-  var html;
-  var body;
-  var suites;
-  var pendingFileWritings = 0;
-  var fileWritingFinished = function() {};
-  var allMessages = [];
-  
-  baseReporterDecorator(this);
-  
-  // TODO: remove if public version of this method is available
-  var basePathResolve = function(relativePath) {
+var HTMLReporter = function(baseReporterDecorator, config, emitter, logger,
+		helper, formatError) {
+	var outputFile = config.htmlReporter.outputFile;
+	var pageTitle = config.htmlReporter.pageTitle || 'Unit Test Results';
+	var subPageTitle = config.htmlReporter.subPageTitle || false;
+	var log = logger.create('reporter.html');
 
-    if (helper.isUrlAbsolute(relativePath)) {
-      return relativePath;
-    }
+	var html;
+	var body;
+	var suites;
+	var resultsContainer;
+	var pendingFileWritings = 0;
+	var fileWritingFinished = function() {};
+	var allMessages = [];
 
-    if (!helper.isDefined(config.basePath) || !helper.isDefined(relativePath)) {
-      return '';
-    }
+	baseReporterDecorator(this);
 
-    return path.resolve(config.basePath, relativePath);
-  };
+	// TODO: remove if public version of this method is available
+	var basePathResolve = function(relativePath) {
 
-  var htmlHelpers = {
-    createHead: function() {
-      var head = html.ele('head');
-      head.ele('meta', {charset: 'utf-8'});
-      head.ele('title', {}, pageTitle + (subPageTitle ? ' - ' + subPageTitle : ''));
-      head.ele('style', {type: 'text/css'}, 'html,body{font-family:Arial,sans-serif;margin:0;padding:0;}body{padding:10px 40px;}h1{margin-bottom:0;}h2{margin-top:0;color:#999;}table{width:100%;margin-top:20px;margin-bottom:20px;table-layout:fixed;}tr.header{background:#ddd;font-weight:bold;border-bottom:none;}td{padding:7px;border-top:none;border-left:1px black solid;border-bottom:1px black solid;border-right:none;word-break:break-all;word-wrap:break-word;}tr.pass td{color:#003b07;background:#86e191;}tr.skip td{color:#7d3a00;background:#ffd24a;}tr.fail td{color:#5e0e00;background:#ff9c8a;}tr:first-child td{border-top:1px black solid;}td:last-child{border-right:1px black solid;}tr.overview{font-weight:bold;color:#777;}tr.overview td{padding-bottom:0px;border-bottom:none;}tr.system-out td{color:#777;}hr{height:2px;margin:30px 0;background:#000;border:none;}');
-    },
-    createBody: function() {
-      body = html.ele('body');
-      body.ele('h1', {}, pageTitle);
+		if (helper.isUrlAbsolute(relativePath)) {
+			return relativePath;
+		}
+
+		if (!helper.isDefined(config.basePath)
+				|| !helper.isDefined(relativePath)) {
+			return '';
+		}
+
+		return path.resolve(config.basePath, relativePath);
+	};
+
+	var htmlHelpers = {
+		createHead : function() {
+			var head = html.ele('head');
+			head.ele('meta', {
+				charset : 'utf-8'
+			});
+			head.ele('title', {}, pageTitle
+					+ (subPageTitle ? ' - ' + subPageTitle : ''));
+			head.ele('link', {
+				type : 'text/css',
+				rel : 'stylesheet',
+				href : 'assets/css/bootstrap.css'
+			});
+			head.ele('link', {
+				type : 'text/css',
+				rel : 'stylesheet',
+				href : 'assets/css/overwrite.css'
+			});
+
+		},
+		createBody : function() {
+			body = html.ele('body');
+			var nav = body.ele('nav', {
+				class : "navbar navbar-inverse"
+			}).ele('div', {
+				class : "container-fluid"
+			});
 			
-      if (subPageTitle) {
-        body.ele('h2', {}, subPageTitle);
-      }
-    }
-  };
-  
-  var createHtmlResults = function(browser) {
-	var suite;
-	var header;
-	var timestamp = (new Date()).toLocaleString();
+			var navHeaderSection = nav.ele('div', {class: "navbar-header"});
+			navHeaderSection.ele('span', {
+				class : "glyphicon glyphicon-list-alt navbar-brand"
+			});
 
-	suite = suites[browser.id] = body.ele('table', {cellspacing:'0', cellpadding:'0', border:'0'});
-	suite.ele('tr', {class:'overview'}).ele('td', {colspan:'3', title:browser.fullName}, 'Browser: ' + browser.name);
-	suite.ele('tr', {class:'overview'}).ele('td', {colspan:'3'}, 'Timestamp: ' + timestamp);
-	suites[browser.id]['results'] = suite.ele('tr').ele('td', {colspan:'3'});
+			nav.ele('h3', {
+				class : "navbar-text"
+			}, pageTitle);
+			
+			nav.ele('h4', {class : "nav navbar-nav navbar-text ow-sub-title"}, subPageTitle);
+			
+			resultsContainer = body.ele('div', {class: "container-fluid"}).ele('div', {class: 'row'}).ele('div', {class: 'col-xs-12'})
+		}
+	};
 
-	header = suite.ele('tr', {class:'header'});
-	header.ele('td', {}, 'Status');
-	header.ele('td', {}, 'Spec');
-	header.ele('td', {}, 'Suite / Results');
+	var createHtmlResults = function(browser) {
+		var suite;
+		var header;
+		var timestamp = (new Date()).toLocaleString();
 
-	body.ele('hr');
-  };
+		suite = suites[browser.id] = resultsContainer.ele('table', {
+			class : 'table table-bordered table-hover'
+		});
+		
+		suite.ele('caption', {class: ''}, "Test Results running in "+ browser.name + ' Timestamp: ' + timestamp);
+		
+		suites[browser.id]['results'] = suite.ele('tr').ele('td', {
+			colspan : '3'
+		}); 
 
-  this.adapters = [function(msg) {
-    allMessages.push(msg);
-  }];
+		header = suite.ele('tr', {
+			class : 'header'
+		});
+		header.ele('td', {}, 'Status');
+		header.ele('td', {}, 'Spec');
+		header.ele('td', {}, 'Suite / Results');
 
-  this.onRunStart = function(browsers) {
-    suites = {};
+		body.ele('hr');
+	};
 
-    html = builder.create('html', null, 'html', { headless: true });
-    html.doctype();
+	this.adapters = [ function(msg) {
+		allMessages.push(msg);
+	} ];
 
-    htmlHelpers.createHead();
-    htmlHelpers.createBody();
-	
-    if (!this.onBrowserStart) {
-      browsers.forEach(function(browser) {
-        createHtmlResults(browser);
-      });
-    }
-  };
-  
-  if (this.onBrowserStart) {
-    this.onBrowserStart = function (browser) {
-      createHtmlResults(browser);
-    };
-  }
+	this.onRunStart = function(browsers) {
+		suites = {};
 
-  this.onBrowserComplete = function(browser) {
-    var suite = suites[browser.id];
-    var result = browser.lastResult;
+		html = builder.create('html', null, 'html', {
+			headless : true
+		});
+		html.doctype();
 
-    if (suite && suite['results']) {
-      suite['results'].txt(result.total + ' tests / ');
-      suite['results'].txt((result.disconnected || result.error ? 1 : 0) + ' errors / ');
-      suite['results'].txt(result.failed + ' failures / ');
-      suite['results'].txt(result.skipped + ' skipped / ');
-      suite['results'].txt('runtime: ' + ((result.netTime || 0) / 1000) + 's');
-	  
-      if (allMessages.length > 0) {
-        suite.ele('tr', {class:'system-out'}).ele('td', {colspan:'3'}).raw('<strong>System output:</strong><br />' + allMessages.join('<br />'));
-      }
-    }
-  };
+		htmlHelpers.createHead();
+		htmlHelpers.createBody();
 
-  this.onRunComplete = function() {
-    var htmlToOutput = html;
+		if (!this.onBrowserStart) {
+			browsers.forEach(function(browser) {
+				createHtmlResults(browser);
+			});
+		}
+	};
 
-    pendingFileWritings++;
+	if (this.onBrowserStart) {
+		this.onBrowserStart = function(browser) {
+			createHtmlResults(browser);
+		};
+	}
 
-    config.basePath = path.resolve(config.basePath || '.');
-    outputFile = basePathResolve(outputFile);
-    helper.normalizeWinPath(outputFile);
-	
-    helper.mkdirIfNotExists(path.dirname(outputFile), function() {
-      fs.writeFile(outputFile, htmlToOutput.end({pretty: true}), function(err) {
-        if (err) {
-          log.warn('Cannot write HTML report\n\t' + err.message);
-        } else {
-          log.debug('HTML results written to "%s".', outputFile);
-        }
+	this.onBrowserComplete = function(browser) {
+		var suite = suites[browser.id];
+		var result = browser.lastResult;
 
-        if (!--pendingFileWritings) {
-          fileWritingFinished();
-        }
-      });
-    });
+		if (suite && suite['results']) {
+			suite['results'].txt(result.total + ' tests / ');
+			suite['results'].txt((result.disconnected || result.error ? 1 : 0)
+					+ ' errors / ');
+			suite['results'].txt(result.failed + ' failures / ');
+			suite['results'].txt(result.skipped + ' skipped / ');
+			suite['results'].txt('runtime: ' + ((result.netTime || 0) / 1000)
+					+ 's');
 
-    suites = html = null;
-    allMessages.length = 0;
-  };
+			if (allMessages.length > 0) {
+				suite.ele('tr', {
+					class : 'system-out'
+				}).ele('td', {
+					colspan : '3'
+				}).raw(
+						'<strong>System output:</strong><br />'
+								+ allMessages.join('<br />'));
+			}
+		}
+	};
 
-  this.specSuccess = this.specSkipped = this.specFailure = function(browser, result) {
-    var specClass = result.skipped ? 'skip' : (result.success ? 'pass' : 'fail');
-    var spec = suites[browser.id].ele('tr', {class:specClass});
-    var suiteColumn;
+	this.onRunComplete = function() {
+		var htmlToOutput = html;
 
-    spec.ele('td', {}, result.skipped ? 'Skipped' : (result.success ? ('Passed in ' + ((result.time || 0) / 1000) + 's') : 'Failed'));
-    spec.ele('td', {}, result.description);
-    suiteColumn = spec.ele('td', {}).raw(result.suite.join(' &raquo; '));
+		pendingFileWritings++;
 
-    if (!result.success) {
-      result.log.forEach(function(err) {
-        suiteColumn.raw('<br />' + formatError(err).replace(/</g,'&lt;').replace(/>/g,'&gt;'));
-      });
-    }
-  };
+		config.basePath = path.resolve(config.basePath || '.');
+		outputFile = basePathResolve(outputFile);
+		helper.normalizeWinPath(outputFile);
 
-  // TODO(vojta): move to onExit
-  // wait for writing all the html files, before exiting
-  emitter.on('exit', function(done) {
-    if (pendingFileWritings) {
-      fileWritingFinished = done;
-    } else {
-      done();
-    }
-  });
+		helper
+				.mkdirIfNotExists(
+						path.dirname(outputFile),
+						function() {
+							fs.writeFile(outputFile, htmlToOutput.end({
+								pretty : true
+							}), function(err) {
+								if (err) {
+									log.warn('Cannot write HTML report\n\t'
+											+ err.message);
+								} else {
+									log.debug('HTML results written to "%s".',
+											outputFile);
+								}
+
+								if (!--pendingFileWritings) {
+									fileWritingFinished();
+								}
+							});
+
+							// copy the style sheet
+							var dir = path.parse(outputFile).dir
+									+ "/assets/";
+							fse
+									.copy(
+											'node_modules/karma-htmlfile2-reporter/assets/',
+											dir,
+											function(err) {
+												if (err) {
+													console
+															.log("Cannot write css...");
+													log.debug(err);
+												}
+											});
+						});
+
+		suites = html = null;
+		allMessages.length = 0;
+	};
+
+	this.specSuccess = this.specSkipped = this.specFailure = function(browser,
+			result) {
+		var specClass = result.skipped ? 'warning' : (result.success ? 'success'
+				: 'danger');
+		var spec = suites[browser.id].ele('tr', {
+			class : specClass
+		});
+		var suiteColumn;
+
+		spec.ele('td', {},
+				result.skipped ? 'Skipped' : (result.success ? ('Passed in '
+						+ ((result.time || 0) / 1000) + 's') : 'Failed'));
+		spec.ele('td', {}, result.description);
+		suiteColumn = spec.ele('td', {class: 'spec-width'});
+		suiteColumn.ele('div', {class: ''}).raw(result.suite.join(' &raquo; '));
+
+		if (!result.success) {
+			result.log.forEach(function(err) {
+				suiteColumn.ele('pre', {class: 'pre-scrollable'}).ele('code',{class: 'text-justify'} , formatError(err));
+			});
+		}
+	};
+
+	// TODO(vojta): move to onExit
+	// wait for writing all the html files, before exiting
+	emitter.on('exit', function(done) {
+		if (pendingFileWritings) {
+			fileWritingFinished = done;
+		} else {
+			done();
+		}
+	});
 };
 
-HTMLReporter.$inject = ['baseReporterDecorator', 'config', 'emitter', 'logger', 'helper', 'formatError'];
+HTMLReporter.$inject = [ 'baseReporterDecorator', 'config', 'emitter',
+		'logger', 'helper', 'formatError' ];
 
 // PUBLISH DI MODULE
 module.exports = {
-	'reporter:html': ['type', HTMLReporter]
+	'reporter:html' : [ 'type', HTMLReporter ]
 };

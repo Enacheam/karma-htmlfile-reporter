@@ -1,5 +1,5 @@
 {
-  "name": "karma-htmlfile-reporter",
+  "name": "karma-htmlfile2-reporter",
   "version": "0.2.2",
   "description": "A Karma plugin. Report results in styled html format.",
   "main": "index.js",
@@ -20,6 +20,7 @@
     "email": "MatthiasSchuetz@gmx.de"
   },
   "dependencies": {
+    "fs-extra": "^0.24.0",
     "xmlbuilder": "2.4.4"
   },
   "peerDependencies": {
