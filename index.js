@@ -13,11 +13,16 @@ var HTMLReporter = function(baseReporterDecorator, config, emitter, logger,
 
 	var html;
 	var body;
+	var mainBody;
+	var sideMenu;
 	var suites;
 	var resultsContainer;
+	var tabsContainer;
+	var tabContent;
 	var pendingFileWritings = 0;
 	var fileWritingFinished = function() {};
 	var allMessages = [];
+	var allBrowsers;
 
 	baseReporterDecorator(this);
 
@@ -38,28 +43,30 @@ var HTMLReporter = function(baseReporterDecorator, config, emitter, logger,
 
 	var htmlHelpers = {
 		createHead : function() {
+			var cssAssetsUrls = ['bootstrap.css', 'overwrite.css','c3.css'];
 			var head = html.ele('head');
 			head.ele('meta', {
 				charset : 'utf-8'
 			});
 			head.ele('title', {}, pageTitle
 					+ (subPageTitle ? ' - ' + subPageTitle : ''));
-			head.ele('link', {
-				type : 'text/css',
-				rel : 'stylesheet',
-				href : 'assets/css/bootstrap.css'
+			
+			cssAssetsUrls.forEach(function(asset, index){
+				if(asset.indexOf('.css') !== -1){
+					head.ele('link', {
+						type : 'text/css',
+						rel : 'stylesheet',
+						href : 'assets/css/' + asset
+					});
+				}
 			});
-			head.ele('link', {
-				type : 'text/css',
-				rel : 'stylesheet',
-				href : 'assets/css/overwrite.css'
-			});
-
 		},
+		
 		createBody : function() {
+			var scriptAssetUrls = ['d3.js', 'c3.js','jquery.min.js','tab.js', 'app.js'];
 			body = html.ele('body');
 			var nav = body.ele('nav', {
-				class : "navbar navbar-inverse"
+				class : "navbar navbar-inverse navbar-fixed-top"
 			}).ele('div', {
 				class : "container-fluid"
 			});
@@ -75,24 +82,60 @@ var HTMLReporter = function(baseReporterDecorator, config, emitter, logger,
 			
 			nav.ele('h4', {class : "nav navbar-nav navbar-text ow-sub-title"}, subPageTitle);
 			
-			resultsContainer = body.ele('div', {class: "container-fluid"}).ele('div', {class: 'row'}).ele('div', {class: 'col-xs-12'})
+			mainBody = body.ele('div', {class: "container-fluid position-offset"}).ele('div', {class: 'row'});
+			
+			sideMenu = mainBody.ele('div', {class: 'col-xs-2 sidebar-offcanvas', id : 'sidebar', role: 'navigation'});
+			var ul = sideMenu.ele('ul', {class: 'nav nav-sidebar'});
+			ul.ele('li', {class: 'active'}).ele('a', {href: '#'}, "Overview");
+			ul.ele('li', {class: ''}).ele('a', {class: '', href: '#'}, "Reports");
+			ul.ele('li', {class: ''}).ele('a', {class: '', href: '#'}, "Analytics");
+			
+			resultsContainer = mainBody.ele('div', {class: 'col-xs-10 main'});
+			
+			resultsContainer.ele('div', {id: "chart"},'')
+			tabsContainer = resultsContainer.ele('ul', {class: 'nav nav-tabs', id: 'myTab'}, '');
+			tabContent = resultsContainer.ele('div', {class: 'tab-content', id: 'myTabContent'},'');
+			
+			body.ele('footer', {}).ele('p', {class: 'pull-right'});
+			
+			scriptAssetUrls.forEach(function(asset, index){
+				if(asset.indexOf('.js') !== -1){
+					body.ele('script', {
+						src : 'assets/js/'+ asset
+					}, '');
+				}
+			});
 		}
+	};
+	
+	var formBrowserId = function(browser){
+		return browser.name.substr(0, browser.name.indexOf(' '));
+	};
+	
+	var createHtmlTabs = function(browser, index){
+		if(index === 0){
+			tabsContainer.ele('li', {class: 'active'}, '').ele('a', {href:'#'+ formBrowserId(browser), 'data-toggle': 'tab'}, browser.name);
+		}else{
+			tabsContainer.ele('li', {class: ''}, '').ele('a', {href:'#'+formBrowserId(browser), 'data-toggle': 'tab'}, browser.name);
+		}
+		
 	};
 
 	var createHtmlResults = function(browser) {
 		var suite;
 		var header;
+		var useClass;
 		var timestamp = (new Date()).toLocaleString();
+		
+		//index === 0 ? (useClass = 'tab-pane fade in active') : (useClass = "tab-pane fade");
 
-		suite = suites[browser.id] = resultsContainer.ele('table', {
+		suite = suites[browser.id] = tabContent.ele('div', {class: 'tab-pane fade', id: formBrowserId(browser)}).ele('table', {
 			class : 'table table-bordered table-hover'
 		});
 		
 		suite.ele('caption', {class: ''}, "Test Results running in "+ browser.name + ' Timestamp: ' + timestamp);
 		
-		suites[browser.id]['results'] = suite.ele('tr').ele('td', {
-			colspan : '3'
-		}); 
+		suites[browser.id]['results'] = suite.ele('tr').ele('td', {colspan : '3'}); 
 
 		header = suite.ele('tr', {
 			class : 'header'
@@ -118,7 +161,11 @@ var HTMLReporter = function(baseReporterDecorator, config, emitter, logger,
 
 		htmlHelpers.createHead();
 		htmlHelpers.createBody();
-
+		
+		browsers.forEach(function(browser, index) {
+			createHtmlTabs(browser, index);
+		});
+		
 		if (!this.onBrowserStart) {
 			browsers.forEach(function(browser) {
 				createHtmlResults(browser);
@@ -166,8 +213,7 @@ var HTMLReporter = function(baseReporterDecorator, config, emitter, logger,
 		outputFile = basePathResolve(outputFile);
 		helper.normalizeWinPath(outputFile);
 
-		helper
-				.mkdirIfNotExists(
+		helper.mkdirIfNotExists(
 						path.dirname(outputFile),
 						function() {
 							fs.writeFile(outputFile, htmlToOutput.end({
@@ -189,14 +235,9 @@ var HTMLReporter = function(baseReporterDecorator, config, emitter, logger,
 							// copy the style sheet
 							var dir = path.parse(outputFile).dir
 									+ "/assets/";
-							fse
-									.copy(
-											'node_modules/karma-htmlfile2-reporter/assets/',
-											dir,
-											function(err) {
+							fse.copy('node_modules/karma-htmlfile2-reporter/assets/',dir,function(err) {
 												if (err) {
-													console
-															.log("Cannot write css...");
+													console.log("Cannot write css...");
 													log.debug(err);
 												}
 											});
@@ -219,12 +260,12 @@ var HTMLReporter = function(baseReporterDecorator, config, emitter, logger,
 				result.skipped ? 'Skipped' : (result.success ? ('Passed in '
 						+ ((result.time || 0) / 1000) + 's') : 'Failed'));
 		spec.ele('td', {}, result.description);
-		suiteColumn = spec.ele('td', {class: 'spec-width'});
+		suiteColumn = spec.ele('td', {class: 'specs-def'});
 		suiteColumn.ele('div', {class: ''}).raw(result.suite.join(' &raquo; '));
 
 		if (!result.success) {
 			result.log.forEach(function(err) {
-				suiteColumn.ele('pre', {class: 'pre-scrollable'}).ele('code',{class: 'text-justify'} , formatError(err));
+				suiteColumn.ele('pre', {class: 'pre-scrollable text-justify'}, formatError(err));
 			});
 		}
 	};
