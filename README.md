@@ -10,7 +10,7 @@ This is a plugin for the [Karma Test Runner] which uses bootstrap css framework 
 <img src="http://matthias-schuetz.github.io/karma-htmlfile-reporter/karma-htmlfile-reporter.png" />
 
 ### karma-htmlfileAlt-reporter sample view
-<img src="https://github.com/Enacheam/karma-htmlfileAlt-reporter/karma-htmlalt-reporter.png" />
+<img src="./karma-htmlalt-reporter.png" />
 
 ## Installation
 
@@ -19,14 +19,14 @@ The easiest way is to keep `karma-htmlfileAlt-reporter` as a devDependency in yo
 {
   "devDependencies": {
     "karma": "~0.10",
-    "karma-htmlfileAlt-reporter": "~0.1"
+    "karma-htmlfilealt-reporter": "~0.1"
   }
 }
 ```
 
 You can simple do it by:
 ```bash
-npm install karma-htmlfileAlt-reporter --save-dev
+npm install karma-htmlfilealt-reporter --save-dev
 ```
 
 ## Configuration
@@ -34,7 +34,7 @@ npm install karma-htmlfileAlt-reporter --save-dev
 // karma.conf.js
 module.exports = function(config) {
   config.set({
-    reporters: ['progress', 'htmlAlt'],
+    reporters: ['progress', 'htmlalt'],
 
     htmlReporter: {
       outputFile: 'tests/units.html',
@@ -49,7 +49,7 @@ module.exports = function(config) {
 
 You can pass list of reporters as a CLI argument too:
 ```bash
-karma start --reporters htmlAlt
+karma start --reporters htmlalt
 ```
 
 Acknowledgement
