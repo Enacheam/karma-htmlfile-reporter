@@ -14,11 +14,11 @@
     "karma-plugin",
     "karma-reporter",
     "html",
-    "htmlAlt"
+    "htmlalt"
   ],
   "author": {
     "name": "Enoch Acheampong Snr.",
-    "email": "kenacheam@hotmail.com"
+    "email": "mr.acheampongsnr@gmail.com"
   },
   "dependencies": {
     "fs-extra": "^0.24.0",

@@ -186,7 +186,7 @@ var HTMLReporter = function(baseReporterDecorator, config, emitter, logger,
 			suite['results'].txt('runtime: ' + ((result.netTime || 0) / 1000)
 					+ 's');
 			
-			fse.writeJson('node_modules/karma-htmlfile2-reporter/assets/testresult.json', 
+			fse.writeJson('node_modules/karma-htmlfilealt-reporter/assets/testresult.json', 
 					{
 					passed: (result.total - result.failed),
 					failed: result.failed,
@@ -241,7 +241,7 @@ var HTMLReporter = function(baseReporterDecorator, config, emitter, logger,
 							// copy the style sheet
 							var dir = path.parse(outputFile).dir
 									+ "/assets/";
-							fse.copy('node_modules/karma-htmlfile2-reporter/assets/',dir,function(err) {
+							fse.copy('node_modules/karma-htmlfilealt-reporter/assets/',dir,function(err) {
 												if (err) {
 													console.log("Cannot write css...");
 													log.debug(err);
@@ -292,5 +292,5 @@ HTMLReporter.$inject = [ 'baseReporterDecorator', 'config', 'emitter',
 
 // PUBLISH DI MODULE
 module.exports = {
-	'reporter:htmlAlt' : [ 'type', HTMLReporter ]
+	'reporter:htmlalt' : [ 'type', HTMLReporter ]
 };
