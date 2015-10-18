@@ -173,7 +173,6 @@ var HTMLReporter = function(baseReporterDecorator, config, emitter, logger,
 	}
 
 	this.onBrowserComplete = function(browser) {
-		console.log("This is browser info", browser);
 		var suite = suites[browser.id];
 		var result = browser.lastResult;
 

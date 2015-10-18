@@ -1,4 +1,4 @@
-karma-htmlfileAlt-reporter
+karma-htmlfilealt-reporter
 =======================
 
 ## A karma plugin for exporting unit test results as styled HTML file using bootstrap css framework
