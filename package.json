@@ -1,5 +1,5 @@
 {
-  "name": "karma-htmlfileAlt-reporter",
+  "name": "karma-htmlfilealt-reporter",
   "version": "0.1.1",
   "description": "A Karma plugin. Report results in styled html format using bootstrap css framework based on karma-html-reporter",
   "main": "index.js",
@@ -14,7 +14,7 @@
     "karma-plugin",
     "karma-reporter",
     "html",
-    "htmlAlt",
+    "htmlAlt"
   ],
   "author": {
     "name": "Enoch Acheampong Snr.",
