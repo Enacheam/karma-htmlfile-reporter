@@ -1,6 +1,6 @@
 {
   "name": "karma-htmlfilealt-reporter",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A Karma plugin. Report results in styled html format using bootstrap css framework based on karma-html-reporter",
   "main": "index.js",
   "scripts": {
