@@ -120,3 +120,15 @@ footer {
 .main .page-header {
   margin-top: 0;
 }
+
+.panel-green{
+	background-color: #1F8A70;
+}
+
+.huge{
+	font-size: 2.5em;
+}
+
+.top{
+	margin-top: 50px;
+}

@@ -22,7 +22,6 @@ var HTMLReporter = function(baseReporterDecorator, config, emitter, logger,
 	var pendingFileWritings = 0;
 	var fileWritingFinished = function() {};
 	var allMessages = [];
-	var allBrowsers;
 
 	baseReporterDecorator(this);
 
@@ -86,9 +85,7 @@ var HTMLReporter = function(baseReporterDecorator, config, emitter, logger,
 			
 			sideMenu = mainBody.ele('div', {class: 'col-xs-2 sidebar-offcanvas', id : 'sidebar', role: 'navigation'});
 			var ul = sideMenu.ele('ul', {class: 'nav nav-sidebar'});
-			ul.ele('li', {class: 'active'}).ele('a', {href: '#'}, "Overview");
-			ul.ele('li', {class: ''}).ele('a', {class: '', href: '#'}, "Reports");
-			ul.ele('li', {class: ''}).ele('a', {class: '', href: '#'}, "Analytics");
+			ul.ele('li', {class: 'active top'}).ele('a', {href: '#'}, "Overview");
 			
 			resultsContainer = mainBody.ele('div', {class: 'col-xs-10 main'});
 			
@@ -127,24 +124,20 @@ var HTMLReporter = function(baseReporterDecorator, config, emitter, logger,
 		var useClass;
 		var timestamp = (new Date()).toLocaleString();
 		
-		//index === 0 ? (useClass = 'tab-pane fade in active') : (useClass = "tab-pane fade");
-
 		suite = suites[browser.id] = tabContent.ele('div', {class: 'tab-pane fade', id: formBrowserId(browser)}).ele('table', {
 			class : 'table table-bordered table-hover'
 		});
 		
 		suite.ele('caption', {class: ''}, "Test Results running in "+ browser.name + ' Timestamp: ' + timestamp);
 		
-		suites[browser.id]['results'] = suite.ele('tr').ele('td', {colspan : '3'}); 
-
+		suites[browser.id]['results'] = suite.ele('tr').ele('td', {colspan : '3'});
+		
 		header = suite.ele('tr', {
 			class : 'header'
 		});
 		header.ele('td', {}, 'Status');
 		header.ele('td', {}, 'Spec');
 		header.ele('td', {}, 'Suite / Results');
-
-		body.ele('hr');
 	};
 
 	this.adapters = [ function(msg) {
@@ -180,6 +173,7 @@ var HTMLReporter = function(baseReporterDecorator, config, emitter, logger,
 	}
 
 	this.onBrowserComplete = function(browser) {
+		console.log("This is browser info", browser);
 		var suite = suites[browser.id];
 		var result = browser.lastResult;
 
@@ -191,6 +185,18 @@ var HTMLReporter = function(baseReporterDecorator, config, emitter, logger,
 			suite['results'].txt(result.skipped + ' skipped / ');
 			suite['results'].txt('runtime: ' + ((result.netTime || 0) / 1000)
 					+ 's');
+			
+			fse.writeJson('node_modules/karma-htmlfile2-reporter/assets/testresult.json', 
+					{
+					passed: (result.total - result.failed),
+					failed: result.failed,
+					skipped: result.skipped,
+					disconnected: result.error? 1: 0
+					}, function(err){
+						if(err){
+							console.log(err);
+						}
+					});
 
 			if (allMessages.length > 0) {
 				suite.ele('tr', {
@@ -286,5 +292,5 @@ HTMLReporter.$inject = [ 'baseReporterDecorator', 'config', 'emitter',
 
 // PUBLISH DI MODULE
 module.exports = {
-	'reporter:html' : [ 'type', HTMLReporter ]
+	'reporter:htmlAlt' : [ 'type', HTMLReporter ]
 };

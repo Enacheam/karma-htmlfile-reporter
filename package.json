@@ -1,7 +1,7 @@
 {
-  "name": "karma-htmlfile2-reporter",
-  "version": "0.2.2",
-  "description": "A Karma plugin. Report results in styled html format.",
+  "name": "karma-htmlfileAlt-reporter",
+  "version": "0.1.1",
+  "description": "A Karma plugin. Report results in styled html format using bootstrap css framework.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -16,8 +16,8 @@
     "html"
   ],
   "author": {
-    "name": "Matthias Schuetz",
-    "email": "MatthiasSchuetz@gmx.de"
+    "name": "Enoch Acheampong Snr.",
+    "email": "kenacheam@hotmail.com"
   },
   "dependencies": {
     "fs-extra": "^0.24.0",
