@@ -1,30 +1,32 @@
-karma-htmlfile-reporter
+karma-htmlfileAlt-reporter
 =======================
 
-## A karma plugin for exporting unit test results as styled HTML file
+## A karma plugin for exporting unit test results as styled HTML file using bootstrap css framework
 
-This is a plugin for the [Karma Test Runner]. By adding this reporter to your karma configuration, unit test results will be exported as a styled HTML file. For each test browser, a separate table is generated. The plugin is  based on the [karma-junit-reporter plugin].
+This is a plugin for the [Karma Test Runner] which uses bootstrap css framework to generate the report. By adding this reporter to your karma configuration, unit test results will be exported as a styled HTML file. For each test browser, a separate table is generated which is grouped into a tab pane, this allows you to have lots of tests executed and grouped according to the browsers the results represent. Also it saves you having to scroll a lengthy page to find the browser's test result. In addition to this, the report provides a simple pie chart using c3.js. The plugin is  based on the [karma-htmlfile-reporter plugin].
 
+
+### karma-htmlfile-reporter sample view
 <img src="http://matthias-schuetz.github.io/karma-htmlfile-reporter/karma-htmlfile-reporter.png" />
 
-## HTML test result page
-<a href="http://matthias-schuetz.github.io/karma-htmlfile-reporter/units.html">Click here to see an example of the exported unit test result page.</a>
+### karma-htmlfileAlt-reporter sample view
+<img src="https://github.com/Enacheam/karma-htmlfileAlt-reporter/karma-htmlalt-reporter.png" />
 
 ## Installation
 
-The easiest way is to keep `karma-htmlfile-reporter` as a devDependency in your `package.json`.
+The easiest way is to keep `karma-htmlfileAlt-reporter` as a devDependency in your `package.json`.
 ```json
 {
   "devDependencies": {
     "karma": "~0.10",
-    "karma-htmlfile-reporter": "~0.2"
+    "karma-htmlfileAlt-reporter": "~0.1"
   }
 }
 ```
 
 You can simple do it by:
 ```bash
-npm install karma-htmlfile-reporter --save-dev
+npm install karma-htmlfileAlt-reporter --save-dev
 ```
 
 ## Configuration
@@ -32,7 +34,7 @@ npm install karma-htmlfile-reporter --save-dev
 // karma.conf.js
 module.exports = function(config) {
   config.set({
-    reporters: ['progress', 'html'],
+    reporters: ['progress', 'htmlAlt'],
 
     htmlReporter: {
       outputFile: 'tests/units.html',
@@ -47,8 +49,14 @@ module.exports = function(config) {
 
 You can pass list of reporters as a CLI argument too:
 ```bash
-karma start --reporters html
+karma start --reporters htmlAlt
 ```
+
+Acknowledgement
+================
+This work was based on previous work by mathias schuetz
+
+This is a beta version. I will be working on adding more features ...
 
 ----
 
