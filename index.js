@@ -2,7 +2,7 @@ var os = require('os');
 var path = require('path');
 var fs = require('fs');
 var fse = require('fs-extra');
-var builder = require('xmlbuilder');
+var builder = require('xmlbuilder');     
 
 var HTMLReporter = function(baseReporterDecorator, config, emitter, logger,
 		helper, formatError) {
