@@ -25,6 +25,7 @@ var HTMLReporter = function(baseReporterDecorator, config, emitter, logger,
 
 	baseReporterDecorator(this);
 
+	console.log("preparing base path");
 	// TODO: remove if public version of this method is available
 	var basePathResolve = function(relativePath) {
 
