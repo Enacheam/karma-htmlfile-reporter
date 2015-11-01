@@ -51,7 +51,7 @@ var HTMLReporter = function(baseReporterDecorator, config, emitter, logger,
 			head.ele('title', {}, pageTitle
 					+ (subPageTitle ? ' - ' + subPageTitle : ''));
 			
-			cssAssetsUrls.forEach(function(asset, index){
+			cssAssetsUrls.forEach(function(asset, index){    
 				if(asset.indexOf('.css') !== -1){
 					head.ele('link', {
 						type : 'text/css',
