@@ -1,6 +1,6 @@
 karma-htmlfilealt-reporter
 =======================
-
+   
 ## A karma plugin for exporting unit test results as styled HTML file using bootstrap css framework
 
 This is a plugin for the [Karma Test Runner] which uses bootstrap css framework to generate the report. By adding this reporter to your karma configuration, unit test results will be exported as a styled HTML file. For each test browser, a separate table is generated which is grouped into a tab pane, this allows you to have lots of tests executed and grouped according to the browsers the results represent. Also it saves you having to scroll a lengthy page to find the browser's test result. In addition to this, the report provides a simple pie chart using c3.js. The plugin is  based on the [karma-htmlfile-reporter plugin].
